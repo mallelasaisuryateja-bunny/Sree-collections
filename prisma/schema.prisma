@@ -1,0 +1,360 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  CUSTOMER
+  ADMIN
+  STAFF
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  RECEIVED
+  REFUNDED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+model Role {
+  id    Int      @id @default(autoincrement())
+  name  RoleName @unique
+  users User[]
+}
+
+model User {
+  id              Int              @id @default(autoincrement())
+  name            String
+  email           String           @unique
+  phone           String?
+  passwordHash    String
+  isActive        Boolean          @default(true)
+  roleId          Int
+  role            Role             @relation(fields: [roleId], references: [id])
+  addresses       Address[]
+  cart            Cart?
+  wishlist        Wishlist?
+  orders          Order[]
+  reviews         Review[]
+  returns         ReturnRequest[]
+  notifications   Notification[]
+  contactMessages ContactMessage[]
+  auditLogs       AuditLog[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Collection {
+  id           Int        @id @default(autoincrement())
+  name         String
+  slug         String     @unique
+  description  String?    @db.Text
+  image        String?
+  status       Boolean    @default(true)
+  displayOrder Int        @default(0)
+  products     Product[]
+  categories   Category[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Category {
+  id            Int           @id @default(autoincrement())
+  name          String
+  slug          String        @unique
+  image         String?
+  status        Boolean       @default(true)
+  collectionId  Int
+  collection    Collection    @relation(fields: [collectionId], references: [id])
+  subcategories Subcategory[]
+  products      Product[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Subcategory {
+  id         Int       @id @default(autoincrement())
+  name       String
+  slug       String    @unique
+  categoryId Int
+  category   Category  @relation(fields: [categoryId], references: [id])
+  products   Product[]
+}
+
+model Product {
+  id                    Int                    @id @default(autoincrement())
+  name                  String
+  slug                  String                 @unique
+  sku                   String                 @unique
+  description           String                 @db.Text
+  shortDescription      String?                @db.Text
+  collectionId          Int
+  categoryId            Int
+  subcategoryId         Int?
+  price                 Decimal                @db.Decimal(12, 2)
+  discountType          DiscountType?
+  discountValue         Decimal?               @db.Decimal(12, 2)
+  sellingPrice          Decimal                @db.Decimal(12, 2)
+  gstPercentage         Decimal                @default(5) @db.Decimal(5, 2)
+  stock                 Int                    @default(0)
+  lowStockThreshold     Int                    @default(5)
+  status                ProductStatus          @default(ACTIVE)
+  featured              Boolean                @default(false)
+  newArrival            Boolean                @default(false)
+  images                ProductImage[]
+  variants              ProductVariant[]
+  cartItems             CartItem[]
+  wishlistItems         WishlistItem[]
+  orderItems            OrderItem[]
+  reviews               Review[]
+  inventoryTransactions InventoryTransaction[]
+  collection            Collection             @relation(fields: [collectionId], references: [id])
+  category              Category               @relation(fields: [categoryId], references: [id])
+  subcategory           Subcategory?           @relation(fields: [subcategoryId], references: [id])
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@index([categoryId, collectionId, status])
+}
+
+model ProductImage {
+  id           Int     @id @default(autoincrement())
+  url          String
+  alt          String?
+  displayOrder Int     @default(0)
+  productId    Int
+  product      Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductVariant {
+  id         Int     @id @default(autoincrement())
+  sku        String  @unique
+  attributes Json
+  price      Decimal? @db.Decimal(12, 2)
+  stock      Int     @default(0)
+  productId  Int
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model InventoryTransaction {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  quantity  Int
+  type      String
+  note      String?
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        Int     @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  quantity  Int
+  product   Product @relation(fields: [productId], references: [id])
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
+}
+
+model Wishlist {
+  id     Int            @id @default(autoincrement())
+  userId Int            @unique
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items  WishlistItem[]
+}
+
+model WishlistItem {
+  id         Int      @id @default(autoincrement())
+  wishlistId Int
+  productId  Int
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@unique([wishlistId, productId])
+}
+
+model Address {
+  id           Int     @id @default(autoincrement())
+  fullName     String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  postalCode   String
+  country      String  @default("India")
+  isDefault    Boolean @default(false)
+  userId       Int
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id              Int             @id @default(autoincrement())
+  orderNumber     String          @unique
+  userId          Int
+  subtotal        Decimal         @db.Decimal(12, 2)
+  discount        Decimal         @db.Decimal(12, 2)
+  gst             Decimal         @db.Decimal(12, 2)
+  shipping        Decimal         @db.Decimal(12, 2)
+  total           Decimal         @db.Decimal(12, 2)
+  paymentStatus   PaymentStatus   @default(PENDING)
+  orderStatus     OrderStatus     @default(PENDING)
+  shippingAddress Json
+  billingAddress  Json
+  items           OrderItem[]
+  payment         Payment?
+  user            User            @relation(fields: [userId], references: [id])
+  returns         ReturnRequest[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  name      String
+  sku       String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(12, 2)
+  gst       Decimal @db.Decimal(12, 2)
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Payment {
+  id                Int           @id @default(autoincrement())
+  orderId           Int           @unique
+  provider          String
+  providerOrderId   String?
+  providerPaymentId String?
+  amount            Decimal       @db.Decimal(12, 2)
+  status            PaymentStatus @default(PENDING)
+  raw               Json?
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt         DateTime      @default(now())
+}
+
+model Coupon {
+  id              Int          @id @default(autoincrement())
+  code            String       @unique
+  discountType    DiscountType
+  discountValue   Decimal      @db.Decimal(12, 2)
+  minimumOrder    Decimal      @db.Decimal(12, 2)
+  maximumDiscount Decimal?     @db.Decimal(12, 2)
+  startDate       DateTime
+  expiryDate      DateTime
+  usageLimit      Int?
+  usedCount       Int          @default(0)
+  status          Boolean      @default(true)
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  userId    Int
+  rating    Int
+  title     String?
+  comment   String?  @db.Text
+  approved  Boolean  @default(true)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([productId, userId])
+}
+
+model ReturnRequest {
+  id                Int          @id @default(autoincrement())
+  orderId           Int
+  userId            Int
+  reason            String
+  evidenceUrl       String?
+  unpackingVideoUrl String?
+  status            ReturnStatus @default(REQUESTED)
+  adminNotes        String?
+  order             Order        @relation(fields: [orderId], references: [id])
+  user              User         @relation(fields: [userId], references: [id])
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String   @db.Text
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  action    String
+  entity    String
+  entityId  String?
+  ipAddress String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}

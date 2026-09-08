@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+:root {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  color: #2a1b20;
+  background-color: #fbf7f0;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Brand Colors */
+.bg-wine {
+  background-color: #6b1d34;
+}
+.text-wine {
+  color: #6b1d34;
+}
+.border-wine {
+  border-color: #6b1d34;
+}
+
+.bg-gold-light {
+  background-color: #f9f1d8;
+}
+.text-gold {
+  color: #c89b3c;
+}
+.bg-gold {
+  background-color: #c89b3c;
+}
+
+/* Glassmorphism nav */
+.glass-nav {
+  background: rgba(251, 247, 240, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #fbf7f0;
+}
+::-webkit-scrollbar-thumb {
+  background: #e5d5c0;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #c89b3c;
+}
