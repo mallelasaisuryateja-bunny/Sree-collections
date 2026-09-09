@@ -22,6 +22,7 @@ const allowedOrigins = [
   "http://127.0.0.1:5173",
   "http://192.168.56.1:5173",
   "http://192.168.10.46:5173",
+  "http://192.168.10.67:5173"
 ].filter(Boolean);
 
 app.use(
