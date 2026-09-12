@@ -19,17 +19,20 @@ app.use(helmet());
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://192.168.56.1:5173",
-  "http://192.168.10.46:5173",
-  "http://192.168.10.67:5173"
+  "http://127.0.0.1:5173"
 ].filter(Boolean);
+
+// Matches any device on a private LAN (10.x.x.x, 172.16-31.x.x, 192.168.x.x)
+// hitting the frontend dev server on port 5173. This is what lets the site
+// work when opened from a phone/laptop via the machine's local IP address
+// (e.g. http://192.168.10.35:5173) instead of only from "localhost".
+const localNetworkOriginPattern = /^http:\/\/(10(\.\d{1,3}){3}|172\.(1[6-9]|2\d|3[0-1])(\.\d{1,3}){2}|192\.168(\.\d{1,3}){2}):5173$/;
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (curl, Postman, server-to-server)
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || localNetworkOriginPattern.test(origin)) {
         return callback(null, true);
       }
       return callback(new Error("Not allowed by CORS"));
@@ -97,57 +100,155 @@ const serializeProduct = (p) => {
 
 // Fallback Mock Data when MySQL is offline
 const MOCK_COLLECTIONS = [
-  { id: 1, name: "Indian Fashion", slug: "indian-fashion", description: "Sarees, ethnic wear and traditional fashion.", status: true, displayOrder: 1, image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80" },
-  { id: 2, name: "Indian Jewelry & Accessories", slug: "indian-jewelry-accessories", description: "Traditional temple jewelry and bridal harams.", status: true, displayOrder: 2, image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=80" },
-  { id: 3, name: "Indian Décor & Celebration", slug: "indian-decor-celebration", description: "Festival, wedding and gifting décor.", status: true, displayOrder: 3, image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80" },
+  { id: 1, name: "Indian Fashion", slug: "indian-fashion", description: "Sarees, ethnic wear, lehengas and traditional fashion.", status: true, displayOrder: 1, image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80" },
+  { id: 2, name: "Indian Jewelry & Accessories", slug: "indian-jewelry-accessories", description: "Temple jewelry, bridal harams and one gram gold jewellery.", status: true, displayOrder: 2, image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=80" },
+  { id: 3, name: "Indian Décor & Celebration", slug: "indian-decor-celebration", description: "Festival diyas, pooja decor, torans and wedding gifting.", status: true, displayOrder: 3, image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80" },
 ];
 
 const MOCK_CATEGORIES = [
   { id: 1, name: "Sarees", slug: "sarees", collectionId: 1, status: true, image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80" },
-  { id: 2, name: "Lehengas & Half Sarees", slug: "lehengas-half-sarees", collectionId: 1, status: true, image: "https://images.unsplash.com/photo-1583391733956-6c78276477e8?auto=format&fit=crop&w=600&q=80" },
-  { id: 3, name: "Temple Jewelry", slug: "temple-jewelry", collectionId: 2, status: true, image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80" },
+  { id: 2, name: "Casual Wear", slug: "casual-wear", collectionId: 1, status: true, image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80" },
+  { id: 3, name: "One Gram Gold Jewellery", slug: "one-gram-gold-jewellery", collectionId: 2, status: true, image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80" },
+  { id: 4, name: "Decorative Items", slug: "decorative-items", collectionId: 3, status: true, image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80" },
+  { id: 5, name: "Lehengas & Half Sarees", slug: "lehengas-half-sarees", collectionId: 1, status: true, image: "https://images.unsplash.com/photo-1583391733956-6c78276477e8?auto=format&fit=crop&w=600&q=80" },
 ];
 
 const MOCK_PRODUCTS = [
   {
     id: 1,
+    name: "Black and Grey Executive Outfit",
+    slug: "black-and-grey-executive-outfit",
+    sku: "SC-CAS-001",
+    description: "Modern Indo-Western fusion executive outfit styled with elegant drape, premium breathable cotton blend, and handcrafted detailing.",
+    shortDescription: "Tailored Indo-Western elegance.",
+    collectionId: 1,
+    categoryId: 2,
+    price: 189.00,
+    sellingPrice: 149.00,
+    gstPercentage: 5,
+    stock: 15,
+    status: "ACTIVE",
+    featured: true,
+    newArrival: true,
+    rating: 5,
+    reviewsCount: 24,
+    collection: MOCK_COLLECTIONS[0],
+    category: MOCK_CATEGORIES[1],
+    images: [
+      { id: 1, url: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80", alt: "Black and Grey Executive Outfit Main View" },
+      { id: 2, url: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=900&q=80", alt: "Black and Grey Executive Outfit Back View" },
+      { id: 3, url: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80", alt: "Black and Grey Executive Outfit Fabric Close-up" },
+    ],
+  },
+  {
+    id: 2,
     name: "Kanchipuram Heritage Silk Saree",
-    slug: "sc-sar-001",
+    slug: "kanchipuram-heritage-silk-saree",
     sku: "SC-SAR-001",
-    description: "Pure Kanchipuram silk handwoven with authentic gold zari weaves.",
+    description: "Pure Kanchipuram silk handwoven with authentic gold zari weaves, featuring grand pallu and blouse piece.",
     shortDescription: "Tradition, elegance and beauty.",
     collectionId: 1,
     categoryId: 1,
-    price: 15999,
-    sellingPrice: 12499,
+    price: 299.00,
+    sellingPrice: 249.00,
     gstPercentage: 5,
     stock: 12,
     status: "ACTIVE",
     featured: true,
     newArrival: true,
+    rating: 5,
+    reviewsCount: 18,
     collection: MOCK_COLLECTIONS[0],
     category: MOCK_CATEGORIES[0],
-    images: [{ id: 1, url: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=80", alt: "Kanchipuram Heritage Silk Saree" }],
+    images: [{ id: 4, url: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=80", alt: "Kanchipuram Heritage Silk Saree" }],
   },
   {
-    id: 2,
-    name: "Royal Banarasi Silk Celebration Saree",
-    slug: "sc-sar-002",
-    sku: "SC-SAR-002",
-    description: "Classic royal Banarasi saree with ornate zari motifs.",
-    shortDescription: "Banarasi celebration drape.",
+    id: 3,
+    name: "Royal Temple Gold Finish Haram Necklace",
+    slug: "royal-temple-gold-finish-haram-necklace",
+    sku: "SC-JWL-001",
+    description: "22K One Gram Gold antique finish temple jewelry haram set with ruby & emerald stone studs and matching jhumkas.",
+    shortDescription: "Temple bridal jewelry haram.",
+    collectionId: 2,
+    categoryId: 3,
+    price: 220.00,
+    sellingPrice: 179.00,
+    gstPercentage: 3,
+    stock: 8,
+    status: "ACTIVE",
+    featured: true,
+    newArrival: true,
+    rating: 5,
+    reviewsCount: 32,
+    collection: MOCK_COLLECTIONS[1],
+    category: MOCK_CATEGORIES[2],
+    images: [{ id: 5, url: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=80", alt: "Royal Temple Gold Haram" }],
+  },
+  {
+    id: 4,
+    name: "Pink Floral Printed Festive Co-ord Set",
+    slug: "pink-floral-printed-festive-co-ord-set",
+    sku: "SC-CAS-002",
+    description: "Vibrant pink floral printed festive ensemble, 100% natural cotton fabric with detailed embroidery and easy flared pants.",
+    shortDescription: "Chic festive casual outfit.",
     collectionId: 1,
-    categoryId: 1,
-    price: 8999,
-    sellingPrice: 6999,
+    categoryId: 2,
+    price: 139.00,
+    sellingPrice: 109.00,
     gstPercentage: 5,
-    stock: 15,
+    stock: 20,
     status: "ACTIVE",
     featured: true,
     newArrival: false,
+    rating: 4,
+    reviewsCount: 15,
+    collection: MOCK_COLLECTIONS[0],
+    category: MOCK_CATEGORIES[1],
+    images: [{ id: 6, url: "https://images.unsplash.com/photo-1583391733956-6c78276477e8?auto=format&fit=crop&w=900&q=80", alt: "Pink Floral Co-ord Set" }],
+  },
+  {
+    id: 5,
+    name: "Handcrafted Brass Hanging Festival Diya & Toran",
+    slug: "handcrafted-brass-hanging-festival-diya-toran",
+    sku: "SC-DEC-001",
+    description: "Traditional peacock brass oil lamp with floral door hanging toran set for Diwali, housewarming, and pooja room decor.",
+    shortDescription: "Traditional pooja & festive decor.",
+    collectionId: 3,
+    categoryId: 4,
+    price: 89.00,
+    sellingPrice: 69.00,
+    gstPercentage: 12,
+    stock: 25,
+    status: "ACTIVE",
+    featured: true,
+    newArrival: false,
+    rating: 5,
+    reviewsCount: 41,
+    collection: MOCK_COLLECTIONS[2],
+    category: MOCK_CATEGORIES[3],
+    images: [{ id: 7, url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=900&q=80", alt: "Festive Brass Diya" }],
+  },
+  {
+    id: 6,
+    name: "Royal Banarasi Silk Celebration Saree",
+    slug: "royal-banarasi-silk-celebration-saree",
+    sku: "SC-SAR-002",
+    description: "Classic royal Banarasi saree with ornate zari motifs, rich maroon border, and handcrafted weave.",
+    shortDescription: "Banarasi celebration drape.",
+    collectionId: 1,
+    categoryId: 1,
+    price: 250.00,
+    sellingPrice: 199.00,
+    gstPercentage: 5,
+    stock: 10,
+    status: "ACTIVE",
+    featured: true,
+    newArrival: false,
+    rating: 5,
+    reviewsCount: 19,
     collection: MOCK_COLLECTIONS[0],
     category: MOCK_CATEGORIES[0],
-    images: [{ id: 2, url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=900&q=80", alt: "Royal Banarasi Saree" }],
+    images: [{ id: 8, url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=900&q=80", alt: "Royal Banarasi Saree" }],
   },
 ];
 
@@ -196,30 +297,30 @@ app.post("/api/auth/register", async (req, res) => {
     if (!name || !email || !password) {
       return sendFail(res, "Name, email and password are required");
     }
-
-    let user;
-    try {
-      const existingUser = await prisma.user.findUnique({ where: { email } });
-      if (existingUser) {
-        return sendFail(res, "Email address is already registered", 409);
-      }
-      const customerRole = await prisma.role.findUnique({ where: { name: "CUSTOMER" } });
-      const passwordHash = await bcrypt.hash(password, 12);
-
-      user = await prisma.user.create({
-        data: {
-          name,
-          email,
-          phone: phone || null,
-          passwordHash,
-          roleId: customerRole.id,
-        },
-        include: { role: true },
-      });
-    } catch {
-      // Fallback user mock
-      user = { id: 99, name, email, phone, role: { name: "CUSTOMER" } };
+    if (password.length < 6) {
+      return sendFail(res, "Password must be at least 6 characters");
     }
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return sendFail(res, "Email address is already registered", 409);
+    }
+    const customerRole = await prisma.role.findUnique({ where: { name: "CUSTOMER" } });
+    if (!customerRole) {
+      return sendFail(res, "Server is not set up correctly (CUSTOMER role missing). Run the database seed script.", 500);
+    }
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        phone: phone || null,
+        passwordHash,
+        roleId: customerRole.id,
+      },
+      include: { role: true },
+    });
 
     const token = signToken(user);
     res.cookie("accessToken", token, {
@@ -238,7 +339,8 @@ app.post("/api/auth/register", async (req, res) => {
       "Registration successful"
     );
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Register error:", e);
+    sendFail(res, "Could not create account. Please check the server is connected to the database.", 500);
   }
 });
 
@@ -249,24 +351,12 @@ app.post("/api/auth/login", async (req, res) => {
       return sendFail(res, "Email and password are required");
     }
 
-    let user;
-    try {
-      user = await prisma.user.findUnique({
-        where: { email },
-        include: { role: true },
-      });
-      if (!user || !user.isActive || !(await bcrypt.compare(password, user.passwordHash))) {
-        return sendFail(res, "Invalid email or password", 401);
-      }
-    } catch {
-      // Fallback mock login for testing
-      const isAdmin = email.includes("admin");
-      user = {
-        id: isAdmin ? 1 : 2,
-        name: isAdmin ? "Sree Admin" : "Demo Customer",
-        email,
-        role: { name: isAdmin ? "ADMIN" : "CUSTOMER" },
-      };
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { role: true },
+    });
+    if (!user || !user.isActive || !(await bcrypt.compare(password, user.passwordHash))) {
+      return sendFail(res, "Invalid email or password", 401);
     }
 
     const token = signToken(user);
@@ -286,7 +376,8 @@ app.post("/api/auth/login", async (req, res) => {
       "Login successful"
     );
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Login error:", e);
+    sendFail(res, "Could not log in. Please check the server is connected to the database.", 500);
   }
 });
 
@@ -297,20 +388,15 @@ app.post("/api/auth/logout", (req, res) => {
 
 app.get("/api/auth/me", authMiddleware, async (req, res) => {
   try {
-    let u;
-    try {
-      u = await prisma.user.findUnique({
-        where: { id: req.user.id },
-        include: { role: true },
-      });
-    } catch {}
-
-    if (!u) {
-      u = { id: req.user.id, name: "Logged User", email: "user@local", role: { name: req.user.role } };
-    }
+    const u = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { role: true },
+    });
+    if (!u) return sendFail(res, "User not found", 404);
     sendOk(res, { id: u.id, name: u.name, email: u.email, phone: u.phone, role: u.role.name });
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Auth/me error:", e);
+    sendFail(res, "Could not verify session. Please check the server is connected to the database.", 500);
   }
 });
 
@@ -473,6 +559,120 @@ app.get("/api/products/:id", async (req, res) => {
   }
 });
 
+// In-Memory Storage for Demo Mode
+const MOCK_CONTACT_MESSAGES = [
+  { id: 1, name: "Ananya Sharma", email: "ananya@example.com", phone: "+1 651-706-6485", subject: "Saree Customization Inquiry", message: "Hi Sree Collections team, do you offer customized blouse stitching for Kanchipuram silk sarees?", createdAt: new Date().toISOString() },
+  { id: 2, name: "Rajesh Varma", email: "rajesh@example.com", phone: "+91-9526830741", subject: "Bulk Return Gifts Order", message: "Interested in purchasing 50 sets of peacock brass diyas for wedding return gifts.", createdAt: new Date().toISOString() }
+];
+
+const MOCK_RETURN_REQUESTS = [
+  { id: 1, orderId: 101, reason: "Fabric snagged on delivery parcel", unpackingVideoUrl: "https://example.com/unboxing-video-proof.mp4", status: "REQUESTED", adminNotes: "Awaiting video review", createdAt: new Date().toISOString() }
+];
+
+// Contact Form Endpoint
+app.post("/api/contact", async (req, res) => {
+  try {
+    const { name, email, phone, subject, message } = req.body;
+    if (!name || !email || !message) {
+      return sendFail(res, "Name, email and message are required.");
+    }
+    let msgObj;
+    try {
+      msgObj = await prisma.contactMessage.create({
+        data: { name, email, phone: phone || null, subject: subject || "General Inquiry", message }
+      });
+    } catch {
+      msgObj = { id: MOCK_CONTACT_MESSAGES.length + 1, name, email, phone, subject: subject || "General Inquiry", message, createdAt: new Date().toISOString() };
+      MOCK_CONTACT_MESSAGES.unshift(msgObj);
+    }
+    sendOk(res, msgObj, "Thank you! Your message has been received. Our team will contact you shortly.");
+  } catch (e) {
+    sendFail(res, "Could not send message. Please try again.", 500);
+  }
+});
+
+// Admin Contact Messages List
+app.get("/api/admin/contact", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
+  try {
+    let list;
+    try {
+      list = await prisma.contactMessage.findMany({ orderBy: { createdAt: "desc" } });
+    } catch {
+      list = MOCK_CONTACT_MESSAGES;
+    }
+    sendOk(res, list || MOCK_CONTACT_MESSAGES);
+  } catch (e) {
+    sendOk(res, MOCK_CONTACT_MESSAGES);
+  }
+});
+
+// Return Requests Endpoint
+app.post("/api/returns", authMiddleware, async (req, res) => {
+  try {
+    const { orderId, reason, unpackingVideoUrl } = req.body;
+    if (!reason || !unpackingVideoUrl) {
+      return sendFail(res, "Return reason and mandatory unpacking video URL are required.");
+    }
+    let retObj;
+    try {
+      retObj = await prisma.returnRequest.create({
+        data: {
+          orderId: Number(orderId) || 1,
+          userId: req.user.id,
+          reason,
+          unpackingVideoUrl,
+          status: "REQUESTED"
+        }
+      });
+    } catch {
+      retObj = { id: MOCK_RETURN_REQUESTS.length + 1, orderId: Number(orderId) || 1, reason, unpackingVideoUrl, status: "REQUESTED", createdAt: new Date().toISOString() };
+      MOCK_RETURN_REQUESTS.unshift(retObj);
+    }
+    sendOk(res, retObj, "Return request submitted! Our quality check team will inspect your unboxing video.");
+  } catch (e) {
+    sendFail(res, "Could not submit return request.", 500);
+  }
+});
+
+// Admin Returns Endpoint
+app.get("/api/admin/returns", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
+  try {
+    let list;
+    try {
+      list = await prisma.returnRequest.findMany({ include: { order: true, user: true }, orderBy: { createdAt: "desc" } });
+    } catch {
+      list = MOCK_RETURN_REQUESTS;
+    }
+    sendOk(res, list || MOCK_RETURN_REQUESTS);
+  } catch (e) {
+    sendOk(res, MOCK_RETURN_REQUESTS);
+  }
+});
+
+app.patch("/api/admin/returns/:id", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
+  try {
+    const { status, adminNotes } = req.body;
+    const numId = Number(req.params.id);
+    let updated;
+    try {
+      updated = await prisma.returnRequest.update({
+        where: { id: numId },
+        data: { status, adminNotes }
+      });
+    } catch {
+      const found = MOCK_RETURN_REQUESTS.find(r => r.id === numId);
+      if (found) {
+        found.status = status || found.status;
+        found.adminNotes = adminNotes || found.adminNotes;
+        updated = found;
+      }
+    }
+    sendOk(res, updated, "Return status updated successfully.");
+  } catch (e) {
+    sendFail(res, "Could not update return status.", 500);
+  }
+});
+
 // Cart Routes
 app.post(
   "/api/cart/items",
@@ -481,58 +681,40 @@ app.post(
   async (req, res) => {
     try {
       const { productId, quantity = 1 } = req.body;
-      let p;
-      try {
-        p = await prisma.product.findUnique({ where: { id: Number(productId) } });
-      } catch {
-        p = MOCK_PRODUCTS.find((item) => item.id === Number(productId)) || MOCK_PRODUCTS[0];
-      }
-
+      const p = await prisma.product.findUnique({ where: { id: Number(productId) } });
       if (!p) return sendFail(res, "Product unavailable");
 
-      let item = {
-        id: Date.now(),
-        cartId: 1,
-        productId: p.id,
-        quantity: Number(quantity),
-        product: p,
-      };
+      const cart = await prisma.cart.upsert({
+        where: { userId: req.user.id },
+        update: {},
+        create: { userId: req.user.id },
+      });
 
-      try {
-        let cart = await prisma.cart.upsert({
-          where: { userId: req.user.id },
-          update: {},
-          create: { userId: req.user.id },
-        });
-
-        item = await prisma.cartItem.upsert({
-          where: { cartId_productId: { cartId: cart.id, productId: p.id } },
-          update: { quantity: { increment: Number(quantity) } },
-          create: { cartId: cart.id, productId: p.id, quantity: Number(quantity) },
-          include: { product: { include: { images: true } } },
-        });
-      } catch {}
+      const item = await prisma.cartItem.upsert({
+        where: { cartId_productId: { cartId: cart.id, productId: p.id } },
+        update: { quantity: { increment: Number(quantity) } },
+        create: { cartId: cart.id, productId: p.id, quantity: Number(quantity) },
+        include: { product: { include: { images: true } } },
+      });
 
       sendOk(res, item, "Item added to cart");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Add to cart error:", e);
+      sendFail(res, "Could not add item to cart. Please check the server is connected to the database.", 500);
     }
   }
 );
 
 app.get("/api/cart", authMiddleware, async (req, res) => {
   try {
-    let cart;
-    try {
-      cart = await prisma.cart.findUnique({
-        where: { userId: req.user.id },
-        include: { items: { include: { product: { include: { images: true } } } } },
-      });
-    } catch {}
-
+    const cart = await prisma.cart.findUnique({
+      where: { userId: req.user.id },
+      include: { items: { include: { product: { include: { images: true } } } } },
+    });
     sendOk(res, cart || { items: [] });
   } catch (e) {
-    sendOk(res, { items: [] });
+    console.error("Get cart error:", e);
+    sendFail(res, "Could not load cart. Please check the server is connected to the database.", 500);
   }
 });
 
@@ -540,116 +722,103 @@ app.put("/api/cart/items/:id", authMiddleware, async (req, res) => {
   try {
     const q = Number(req.body.quantity);
     if (q < 1) return sendFail(res, "Quantity must be at least 1");
-    let item;
-    try {
-      item = await prisma.cartItem.update({
-        where: { id: Number(req.params.id) },
-        data: { quantity: q },
-        include: { product: true },
-      });
-    } catch {
-      item = { id: Number(req.params.id), quantity: q, product: MOCK_PRODUCTS[0] };
-    }
+    const item = await prisma.cartItem.update({
+      where: { id: Number(req.params.id) },
+      data: { quantity: q },
+      include: { product: true },
+    });
     sendOk(res, item, "Cart item updated");
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Update cart item error:", e);
+    sendFail(res, "Could not update cart item.", 500);
   }
 });
 
 app.delete("/api/cart/items/:id", authMiddleware, async (req, res) => {
   try {
-    try {
-      await prisma.cartItem.delete({ where: { id: Number(req.params.id) } });
-    } catch {}
+    await prisma.cartItem.delete({ where: { id: Number(req.params.id) } });
     sendOk(res, null, "Item removed from cart");
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Delete cart item error:", e);
+    sendFail(res, "Could not remove item from cart.", 500);
   }
 });
 
 app.delete("/api/cart", authMiddleware, async (req, res) => {
   try {
-    try {
-      const c = await prisma.cart.findUnique({ where: { userId: req.user.id } });
-      if (c) await prisma.cartItem.deleteMany({ where: { cartId: c.id } });
-    } catch {}
+    const c = await prisma.cart.findUnique({ where: { userId: req.user.id } });
+    if (c) await prisma.cartItem.deleteMany({ where: { cartId: c.id } });
     sendOk(res, null, "Cart cleared successfully");
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Clear cart error:", e);
+    sendFail(res, "Could not clear cart.", 500);
   }
 });
 
 // Wishlist Routes
 app.get("/api/wishlist", authMiddleware, async (req, res) => {
   try {
-    let wishlist;
-    try {
-      wishlist = await prisma.wishlist.findUnique({
-        where: { userId: req.user.id },
-        include: { items: { include: { product: { include: { images: true } } } } },
-      });
-    } catch {}
+    const wishlist = await prisma.wishlist.findUnique({
+      where: { userId: req.user.id },
+      include: { items: { include: { product: { include: { images: true } } } } },
+    });
     sendOk(res, wishlist || { items: [] });
   } catch (e) {
-    sendOk(res, { items: [] });
+    console.error("Get wishlist error:", e);
+    sendFail(res, "Could not load wishlist.", 500);
   }
 });
 
 app.post("/api/wishlist", authMiddleware, async (req, res) => {
   try {
-    let item = { id: Date.now(), productId: Number(req.body.productId) };
-    try {
-      const w = await prisma.wishlist.upsert({
-        where: { userId: req.user.id },
-        update: {},
-        create: { userId: req.user.id },
-      });
-      item = await prisma.wishlistItem.upsert({
-        where: {
-          wishlistId_productId: {
-            wishlistId: w.id,
-            productId: Number(req.body.productId),
-          },
+    const w = await prisma.wishlist.upsert({
+      where: { userId: req.user.id },
+      update: {},
+      create: { userId: req.user.id },
+    });
+    const item = await prisma.wishlistItem.upsert({
+      where: {
+        wishlistId_productId: {
+          wishlistId: w.id,
+          productId: Number(req.body.productId),
         },
-        update: {},
-        create: { wishlistId: w.id, productId: Number(req.body.productId) },
-      });
-    } catch {}
+      },
+      update: {},
+      create: { wishlistId: w.id, productId: Number(req.body.productId) },
+    });
     sendOk(res, item, "Product added to wishlist");
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Add to wishlist error:", e);
+    sendFail(res, "Could not add product to wishlist.", 500);
   }
 });
 
 app.delete("/api/wishlist/:productId", authMiddleware, async (req, res) => {
   try {
-    try {
-      const w = await prisma.wishlist.findUnique({ where: { userId: req.user.id } });
-      if (w) {
-        await prisma.wishlistItem.deleteMany({
-          where: { wishlistId: w.id, productId: Number(req.params.productId) },
-        });
-      }
-    } catch {}
+    const w = await prisma.wishlist.findUnique({ where: { userId: req.user.id } });
+    if (w) {
+      await prisma.wishlistItem.deleteMany({
+        where: { wishlistId: w.id, productId: Number(req.params.productId) },
+      });
+    }
     sendOk(res, null, "Removed from wishlist");
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Remove from wishlist error:", e);
+    sendFail(res, "Could not remove product from wishlist.", 500);
   }
 });
 
 // User Addresses
 app.get("/api/addresses", authMiddleware, async (req, res) => {
   try {
-    let list = [];
-    try {
-      list = await prisma.address.findMany({
-        where: { userId: req.user.id },
-        orderBy: { isDefault: "desc" },
-      });
-    } catch {}
+    const list = await prisma.address.findMany({
+      where: { userId: req.user.id },
+      orderBy: { isDefault: "desc" },
+    });
     sendOk(res, list);
   } catch (e) {
-    sendOk(res, []);
+    console.error("Get addresses error:", e);
+    sendFail(res, "Could not load addresses.", 500);
   }
 });
 
@@ -660,175 +829,177 @@ app.post("/api/addresses", authMiddleware, async (req, res) => {
       return sendFail(res, "Please fill in all required address fields");
     }
 
-    let addr = {
-      id: Date.now(),
-      fullName,
-      phone,
-      addressLine1,
-      addressLine2: addressLine2 || "",
-      city,
-      state,
-      postalCode,
-      isDefault: Boolean(isDefault),
-      userId: req.user.id,
-    };
-
-    try {
-      if (isDefault) {
-        await prisma.address.updateMany({
-          where: { userId: req.user.id },
-          data: { isDefault: false },
-        });
-      }
-
-      addr = await prisma.address.create({
-        data: {
-          fullName,
-          phone,
-          addressLine1,
-          addressLine2: addressLine2 || "",
-          city,
-          state,
-          postalCode,
-          isDefault: Boolean(isDefault),
-          userId: req.user.id,
-        },
+    if (isDefault) {
+      await prisma.address.updateMany({
+        where: { userId: req.user.id },
+        data: { isDefault: false },
       });
-    } catch {}
+    }
+
+    const addr = await prisma.address.create({
+      data: {
+        fullName,
+        phone,
+        addressLine1,
+        addressLine2: addressLine2 || "",
+        city,
+        state,
+        postalCode,
+        isDefault: Boolean(isDefault),
+        userId: req.user.id,
+      },
+    });
 
     sendOk(res, addr, "Address added successfully");
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Add address error:", e);
+    sendFail(res, "Could not save address.", 500);
   }
 });
 
 app.put("/api/addresses/:id", authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id);
-    let updated = { id, ...req.body };
-    try {
-      if (req.body.isDefault) {
-        await prisma.address.updateMany({
-          where: { userId: req.user.id },
-          data: { isDefault: false },
-        });
-      }
-      updated = await prisma.address.update({
-        where: { id, userId: req.user.id },
-        data: req.body,
+    if (req.body.isDefault) {
+      await prisma.address.updateMany({
+        where: { userId: req.user.id },
+        data: { isDefault: false },
       });
-    } catch {}
+    }
+    const updated = await prisma.address.update({
+      where: { id, userId: req.user.id },
+      data: req.body,
+    });
     sendOk(res, updated, "Address updated");
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Update address error:", e);
+    sendFail(res, "Could not update address.", 500);
   }
 });
 
 app.delete("/api/addresses/:id", authMiddleware, async (req, res) => {
   try {
-    try {
-      await prisma.address.delete({
-        where: { id: Number(req.params.id), userId: req.user.id },
-      });
-    } catch {}
+    await prisma.address.delete({
+      where: { id: Number(req.params.id), userId: req.user.id },
+    });
     sendOk(res, null, "Address deleted");
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Delete address error:", e);
+    sendFail(res, "Could not delete address.", 500);
   }
 });
 
 // Orders & Checkout
 app.post("/api/orders", authMiddleware, async (req, res) => {
   try {
-    let order = {
-      id: Date.now(),
-      orderNumber: "SC-" + Date.now(),
-      userId: req.user.id,
-      subtotal: 12499,
-      discount: 0,
-      gst: 624.95,
-      shipping: 0,
-      total: 13123.95,
-      orderStatus: "CONFIRMED",
-      paymentStatus: "PAID",
-    };
+    const cart = await prisma.cart.findUnique({
+      where: { userId: req.user.id },
+      include: { items: { include: { product: true } } },
+    });
 
-    try {
-      const cart = await prisma.cart.findUnique({
-        where: { userId: req.user.id },
-        include: { items: { include: { product: true } } },
+    if (!cart || !cart.items.length) {
+      return sendFail(res, "Your cart is empty.");
+    }
+
+    const address = await prisma.address.findFirst({
+      where: { id: Number(req.body.addressId), userId: req.user.id },
+    });
+    if (!address) {
+      return sendFail(res, "Please select a valid delivery address.");
+    }
+
+    const subtotal = cart.items.reduce(
+      (sum, item) => sum + Number(item.product.sellingPrice) * item.quantity,
+      0
+    );
+    const shipping = subtotal >= 2000 ? 0 : 99;
+    const gst = cart.items.reduce(
+      (sum, item) =>
+        sum +
+        (Number(item.product.sellingPrice) *
+          item.quantity *
+          Number(item.product.gstPercentage)) /
+          100,
+      0
+    );
+    const total = subtotal + gst + shipping;
+
+    const order = await prisma.$transaction(async (tx) => {
+      for (const item of cart.items) {
+        const result = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
+        });
+        if (result.count === 0) {
+          throw new Error(`"${item.product.name}" no longer has enough stock.`);
+        }
+      }
+
+      const o = await tx.order.create({
+        data: {
+          orderNumber: "SC-" + Date.now(),
+          userId: req.user.id,
+          subtotal,
+          discount: 0,
+          gst,
+          shipping,
+          total,
+          shippingAddress: address,
+          billingAddress: address,
+          items: {
+            create: cart.items.map((item) => ({
+              productId: item.productId,
+              name: item.product.name,
+              sku: item.product.sku,
+              quantity: item.quantity,
+              unitPrice: item.product.sellingPrice,
+              gst: Number(item.product.gstPercentage),
+            })),
+          },
+          payment: {
+            create: {
+              provider: "RAZORPAY",
+              amount: total,
+            },
+          },
+        },
       });
 
-      if (cart && cart.items.length) {
-        const address = await prisma.address.findFirst({
-          where: { id: Number(req.body.addressId), userId: req.user.id },
-        });
-
-        const subtotal = cart.items.reduce(
-          (sum, item) => sum + Number(item.product.sellingPrice) * item.quantity,
-          0
-        );
-        const shipping = subtotal >= 2000 ? 0 : 99;
-        const gst = cart.items.reduce(
-          (sum, item) =>
-            sum +
-            (Number(item.product.sellingPrice) *
-              item.quantity *
-              Number(item.product.gstPercentage)) /
-              100,
-          0
-        );
-        const total = subtotal + gst + shipping;
-
-        order = await prisma.$transaction(async (tx) => {
-          for (const item of cart.items) {
-            await tx.product.updateMany({
-              where: { id: item.productId, stock: { gte: item.quantity } },
-              data: { stock: { decrement: item.quantity } },
-            });
-          }
-
-          const o = await tx.order.create({
-            data: {
-              orderNumber: "SC-" + Date.now(),
-              userId: req.user.id,
-              subtotal,
-              discount: 0,
-              gst,
-              shipping,
-              total,
-              shippingAddress: address || {},
-              billingAddress: address || {},
-              items: {
-                create: cart.items.map((item) => ({
-                  productId: item.productId,
-                  name: item.product.name,
-                  sku: item.product.sku,
-                  quantity: item.quantity,
-                  unitPrice: item.product.sellingPrice,
-                  gst: Number(item.product.gstPercentage),
-                })),
-              },
-              payment: {
-                create: {
-                  provider: "RAZORPAY",
-                  amount: total,
-                },
-              },
-            },
-          });
-
-          await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
-          return o;
-        });
-      }
-    } catch {}
+      await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+      return o;
+    });
 
     sendOk(res, order, "Order placed successfully");
   } catch (e) {
-    sendFail(res, e.message, 400);
+    console.error("Place order error:", e);
+    sendFail(res, e.message || "Could not place order. Please check the server is connected to the database.", 400);
   }
 });
+
+const MOCK_ORDERS = [
+  {
+    id: 101,
+    orderNumber: "SC-882410",
+    orderStatus: "DELIVERED",
+    subtotal: 249.00,
+    total: 249.00,
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    items: [
+      { id: 1, name: "Kanchipuram Heritage Silk Saree", quantity: 1, unitPrice: 249.00 }
+    ]
+  },
+  {
+    id: 102,
+    orderNumber: "SC-882411",
+    orderStatus: "SHIPPED",
+    subtotal: 149.00,
+    total: 149.00,
+    createdAt: new Date().toISOString(),
+    items: [
+      { id: 2, name: "Black and Grey Executive Outfit", quantity: 1, unitPrice: 149.00 }
+    ]
+  }
+];
 
 app.get("/api/orders", authMiddleware, async (req, res) => {
   try {
@@ -840,39 +1011,29 @@ app.get("/api/orders", authMiddleware, async (req, res) => {
         include: { items: true, payment: true, user: { select: { name: true, email: true } } },
         orderBy: { createdAt: "desc" },
       });
-    } catch {}
+    } catch {
+      orders = MOCK_ORDERS;
+    }
+    if (!orders || orders.length === 0) {
+      orders = MOCK_ORDERS;
+    }
     sendOk(res, orders);
   } catch (e) {
-    sendOk(res, []);
+    sendOk(res, MOCK_ORDERS);
   }
 });
 
 app.get("/api/orders/:id", authMiddleware, async (req, res) => {
   try {
-    let o;
-    try {
-      o = await prisma.order.findUnique({
-        where: { id: Number(req.params.id) },
-        include: { items: true, payment: true, returns: true },
-      });
-    } catch {}
-
-    if (!o) {
-      o = {
-        id: Number(req.params.id),
-        orderNumber: "SC-1001",
-        userId: req.user.id,
-        subtotal: 12499,
-        gst: 624.95,
-        shipping: 0,
-        total: 13123.95,
-        orderStatus: "DELIVERED",
-        items: [{ id: 1, name: "Kanchipuram Heritage Silk Saree", sku: "SC-SAR-001", quantity: 1, unitPrice: 12499, gst: 5 }],
-      };
-    }
+    const o = await prisma.order.findUnique({
+      where: { id: Number(req.params.id) },
+      include: { items: true, payment: true, returns: true },
+    });
+    if (!o) return sendFail(res, "Order not found", 404);
     sendOk(res, o);
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Get order error:", e);
+    sendFail(res, "Could not load order.", 500);
   }
 });
 
@@ -883,16 +1044,14 @@ app.patch(
   async (req, res) => {
     try {
       const { status } = req.body;
-      let order = { id: Number(req.params.id), orderStatus: status };
-      try {
-        order = await prisma.order.update({
-          where: { id: Number(req.params.id) },
-          data: { orderStatus: status },
-        });
-      } catch {}
+      const order = await prisma.order.update({
+        where: { id: Number(req.params.id) },
+        data: { orderStatus: status },
+      });
       sendOk(res, order, "Order status updated");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Update order status error:", e);
+      sendFail(res, "Could not update order status.", 500);
     }
   }
 );
@@ -905,37 +1064,33 @@ app.post("/api/products/:id/reviews", authMiddleware, async (req, res) => {
       return sendFail(res, "Rating between 1 and 5 is required");
     }
 
-    let review = { id: Date.now(), rating, title, comment, approved: true };
-    try {
-      review = await prisma.review.create({
-        data: {
-          productId: Number(req.params.id),
-          userId: req.user.id,
-          rating: Number(rating),
-          title,
-          comment,
-        },
-      });
-    } catch {}
+    const review = await prisma.review.create({
+      data: {
+        productId: Number(req.params.id),
+        userId: req.user.id,
+        rating: Number(rating),
+        title,
+        comment,
+      },
+    });
     sendOk(res, review, "Review submitted successfully");
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Submit review error:", e);
+    sendFail(res, "Could not submit review.", 500);
   }
 });
 
 app.get("/api/products/:id/reviews", async (req, res) => {
   try {
-    let reviews = [];
-    try {
-      reviews = await prisma.review.findMany({
-        where: { productId: Number(req.params.id), approved: true },
-        include: { user: { select: { name: true } } },
-        orderBy: { createdAt: "desc" },
-      });
-    } catch {}
+    const reviews = await prisma.review.findMany({
+      where: { productId: Number(req.params.id), approved: true },
+      include: { user: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+    });
     sendOk(res, reviews);
   } catch (e) {
-    sendOk(res, []);
+    console.error("List reviews error:", e);
+    sendFail(res, "Could not load reviews.", 500);
   }
 });
 
@@ -946,29 +1101,25 @@ app.post("/api/contact", async (req, res) => {
     if (!name || !email || !subject || !message) {
       return sendFail(res, "Name, email, subject and message are required");
     }
-    let msg = { id: Date.now(), name, email, phone, subject, message };
-    try {
-      msg = await prisma.contactMessage.create({
-        data: { name, email, phone: phone || null, subject, message },
-      });
-    } catch {}
+    const msg = await prisma.contactMessage.create({
+      data: { name, email, phone: phone || null, subject, message },
+    });
     sendOk(res, msg, "Your message has been sent. We will contact you soon!");
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Submit contact message error:", e);
+    sendFail(res, "Could not send message.", 500);
   }
 });
 
 app.get("/api/admin/contact", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
   try {
-    let messages = [];
-    try {
-      messages = await prisma.contactMessage.findMany({
-        orderBy: { createdAt: "desc" },
-      });
-    } catch {}
+    const messages = await prisma.contactMessage.findMany({
+      orderBy: { createdAt: "desc" },
+    });
     sendOk(res, messages);
   } catch (e) {
-    sendOk(res, []);
+    console.error("List contact messages error:", e);
+    sendFail(res, "Could not load messages.", 500);
   }
 });
 
@@ -988,30 +1139,20 @@ app.post("/api/returns", authMiddleware, async (req, res) => {
       );
     }
 
-    let returnReq = {
-      id: Date.now(),
-      orderId: Number(orderId),
-      reason,
-      evidenceUrl,
-      unpackingVideoUrl,
-      status: "REQUESTED",
-    };
-
-    try {
-      returnReq = await prisma.returnRequest.create({
-        data: {
-          orderId: Number(orderId),
-          userId: req.user.id,
-          reason,
-          evidenceUrl: evidenceUrl || null,
-          unpackingVideoUrl: unpackingVideoUrl || null,
-        },
-      });
-    } catch {}
+    const returnReq = await prisma.returnRequest.create({
+      data: {
+        orderId: Number(orderId),
+        userId: req.user.id,
+        reason,
+        evidenceUrl: evidenceUrl || null,
+        unpackingVideoUrl: unpackingVideoUrl || null,
+      },
+    });
 
     sendOk(res, returnReq, "Return request submitted successfully");
   } catch (e) {
-    sendFail(res, e.message, 500);
+    console.error("Submit return request error:", e);
+    sendFail(res, "Could not submit return request.", 500);
   }
 });
 
@@ -1021,16 +1162,14 @@ app.get(
   roleMiddleware("ADMIN", "STAFF"),
   async (req, res) => {
     try {
-      let list = [];
-      try {
-        list = await prisma.returnRequest.findMany({
-          include: { order: true, user: { select: { name: true, email: true, phone: true } } },
-          orderBy: { createdAt: "desc" },
-        });
-      } catch {}
+      const list = await prisma.returnRequest.findMany({
+        include: { order: true, user: { select: { name: true, email: true, phone: true } } },
+        orderBy: { createdAt: "desc" },
+      });
       sendOk(res, list);
     } catch (e) {
-      sendOk(res, []);
+      console.error("List returns error:", e);
+      sendFail(res, "Could not load return requests.", 500);
     }
   }
 );
@@ -1042,16 +1181,14 @@ app.patch(
   async (req, res) => {
     try {
       const { status, adminNotes } = req.body;
-      let updated = { id: Number(req.params.id), status, adminNotes };
-      try {
-        updated = await prisma.returnRequest.update({
-          where: { id: Number(req.params.id) },
-          data: { status, adminNotes },
-        });
-      } catch {}
+      const updated = await prisma.returnRequest.update({
+        where: { id: Number(req.params.id) },
+        data: { status, adminNotes },
+      });
       sendOk(res, updated, "Return status updated");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Update return status error:", e);
+      sendFail(res, "Could not update return status.", 500);
     }
   }
 );
@@ -1063,40 +1200,29 @@ app.get(
   roleMiddleware("ADMIN", "STAFF"),
   async (req, res) => {
     try {
-      let orders = 12, customers = 8, products = 15, lowStock = 2, revenue = 145890;
-      let recentOrders = [];
-      try {
-        const [o, c, p, l] = await Promise.all([
-          prisma.order.count(),
-          prisma.user.count({ where: { role: { name: "CUSTOMER" } } }),
-          prisma.product.count(),
-          prisma.product.count({ where: { stock: { lte: 5 } } }),
-        ]);
-        orders = o; customers = c; products = p; lowStock = l;
+      const [orders, customers, products, lowStock] = await Promise.all([
+        prisma.order.count(),
+        prisma.user.count({ where: { role: { name: "CUSTOMER" } } }),
+        prisma.product.count(),
+        prisma.product.count({ where: { stock: { lte: 5 } } }),
+      ]);
 
-        const revAgg = await prisma.order.aggregate({
-          where: { paymentStatus: "PAID" },
-          _sum: { total: true },
-        });
-        revenue = Number(revAgg._sum.total || 145890);
-
-        recentOrders = await prisma.order.findMany({
-          take: 5,
-          orderBy: { createdAt: "desc" },
-          include: { user: { select: { name: true, email: true } } },
-        });
-      } catch {}
-
-      sendOk(res, {
-        orders,
-        customers,
-        products,
-        lowStock,
-        revenue,
-        recentOrders,
+      const revAgg = await prisma.order.aggregate({
+        where: { paymentStatus: "PAID" },
+        _sum: { total: true },
       });
+      const revenue = Number(revAgg._sum.total || 0);
+
+      const recentOrders = await prisma.order.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: { user: { select: { name: true, email: true } } },
+      });
+
+      sendOk(res, { orders, customers, products, lowStock, revenue, recentOrders });
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Dashboard stats error:", e);
+      sendFail(res, "Could not load dashboard stats. Please check the server is connected to the database.", 500);
     }
   }
 );
@@ -1126,50 +1252,36 @@ app.post(
       }
 
       const slug = sku.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-      let product = {
-        id: Date.now(),
-        name,
-        slug,
-        sku,
-        description,
-        collectionId: Number(collectionId || 1),
-        categoryId: Number(categoryId || 1),
-        price: Number(price),
-        sellingPrice: Number(sellingPrice),
-        gstPercentage: Number(gstPercentage),
-        stock: Number(stock),
-      };
 
-      try {
-        product = await prisma.product.create({
-          data: {
-            name,
-            slug,
-            sku,
-            description,
-            collectionId: Number(collectionId || 1),
-            categoryId: Number(categoryId || 1),
-            price: Number(price),
-            sellingPrice: Number(sellingPrice),
-            gstPercentage: Number(gstPercentage),
-            stock: Number(stock),
-            images: {
-              create: [
-                {
-                  url:
-                    imageUrl ||
-                    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80",
-                  alt: name,
-                },
-              ],
-            },
+      const product = await prisma.product.create({
+        data: {
+          name,
+          slug,
+          sku,
+          description,
+          collectionId: Number(collectionId || 1),
+          categoryId: Number(categoryId || 1),
+          price: Number(price),
+          sellingPrice: Number(sellingPrice),
+          gstPercentage: Number(gstPercentage),
+          stock: Number(stock),
+          images: {
+            create: [
+              {
+                url:
+                  imageUrl ||
+                  "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80",
+                alt: name,
+              },
+            ],
           },
-        });
-      } catch {}
+        },
+      });
 
       sendOk(res, product, "Product created successfully");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Create product error:", e);
+      sendFail(res, e.code === "P2002" ? "A product with this SKU already exists." : "Could not create product.", 500);
     }
   }
 );
@@ -1181,16 +1293,14 @@ app.put(
   async (req, res) => {
     try {
       const id = Number(req.params.id);
-      let updated = { id, ...req.body };
-      try {
-        updated = await prisma.product.update({
-          where: { id },
-          data: req.body,
-        });
-      } catch {}
+      const updated = await prisma.product.update({
+        where: { id },
+        data: req.body,
+      });
       sendOk(res, updated, "Product updated successfully");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Update product error:", e);
+      sendFail(res, "Could not update product.", 500);
     }
   }
 );
@@ -1201,12 +1311,11 @@ app.delete(
   roleMiddleware("ADMIN"),
   async (req, res) => {
     try {
-      try {
-        await prisma.product.delete({ where: { id: Number(req.params.id) } });
-      } catch {}
+      await prisma.product.delete({ where: { id: Number(req.params.id) } });
       sendOk(res, null, "Product deleted successfully");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Delete product error:", e);
+      sendFail(res, "Could not delete product.", 500);
     }
   }
 );
@@ -1218,17 +1327,14 @@ app.get(
   roleMiddleware("ADMIN", "STAFF"),
   async (req, res) => {
     try {
-      let items = MOCK_CATEGORIES;
-      try {
-        const dbItems = await prisma.category.findMany({
-          include: { collection: true, subcategories: true },
-          orderBy: { id: "asc" },
-        });
-        if (dbItems) items = dbItems;
-      } catch {}
+      const items = await prisma.category.findMany({
+        include: { collection: true, subcategories: true },
+        orderBy: { id: "asc" },
+      });
       sendOk(res, items);
     } catch (e) {
-      sendOk(res, MOCK_CATEGORIES);
+      console.error("List admin categories error:", e);
+      sendFail(res, "Could not load categories.", 500);
     }
   }
 );
@@ -1251,31 +1357,21 @@ app.post(
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
 
-      let category = {
-        id: Date.now(),
-        name,
-        slug,
-        collectionId: Number(collectionId),
-        image: image || null,
-        status: Boolean(status),
-      };
-
-      try {
-        category = await prisma.category.create({
-          data: {
-            name,
-            slug,
-            collectionId: Number(collectionId),
-            image: image || null,
-            status: Boolean(status),
-          },
-          include: { collection: true },
-        });
-      } catch {}
+      const category = await prisma.category.create({
+        data: {
+          name,
+          slug,
+          collectionId: Number(collectionId),
+          image: image || null,
+          status: Boolean(status),
+        },
+        include: { collection: true },
+      });
 
       sendOk(res, category, "Category created successfully");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Create category error:", e);
+      sendFail(res, e.code === "P2002" ? "A category with this name already exists." : "Could not create category.", 500);
     }
   }
 );
@@ -1302,18 +1398,16 @@ app.put(
       if (image !== undefined) data.image = image;
       if (status !== undefined) data.status = Boolean(status);
 
-      let updated = { id, ...data };
-      try {
-        updated = await prisma.category.update({
-          where: { id },
-          data,
-          include: { collection: true },
-        });
-      } catch {}
+      const updated = await prisma.category.update({
+        where: { id },
+        data,
+        include: { collection: true },
+      });
 
       sendOk(res, updated, "Category updated successfully");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Update category error:", e);
+      sendFail(res, "Could not update category.", 500);
     }
   }
 );
@@ -1325,16 +1419,14 @@ app.patch(
   async (req, res) => {
     try {
       const id = Number(req.params.id);
-      let updated = { id, status: Boolean(req.body.status) };
-      try {
-        updated = await prisma.category.update({
-          where: { id },
-          data: { status: Boolean(req.body.status) },
-        });
-      } catch {}
+      const updated = await prisma.category.update({
+        where: { id },
+        data: { status: Boolean(req.body.status) },
+      });
       sendOk(res, updated, "Category status updated");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Update category status error:", e);
+      sendFail(res, "Could not update category status.", 500);
     }
   }
 );
@@ -1345,12 +1437,11 @@ app.delete(
   roleMiddleware("ADMIN"),
   async (req, res) => {
     try {
-      try {
-        await prisma.category.delete({ where: { id: Number(req.params.id) } });
-      } catch {}
+      await prisma.category.delete({ where: { id: Number(req.params.id) } });
       sendOk(res, null, "Category deleted successfully");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Delete category error:", e);
+      sendFail(res, "Could not delete category.", 500);
     }
   }
 );
@@ -1362,24 +1453,22 @@ app.get(
   roleMiddleware("ADMIN", "STAFF"),
   async (req, res) => {
     try {
-      let list = [];
-      try {
-        list = await prisma.user.findMany({
-          where: { role: { name: "CUSTOMER" } },
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            isActive: true,
-            createdAt: true,
-          },
-          orderBy: { createdAt: "desc" },
-        });
-      } catch {}
+      const list = await prisma.user.findMany({
+        where: { role: { name: "CUSTOMER" } },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          isActive: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
       sendOk(res, list);
     } catch (e) {
-      sendOk(res, []);
+      console.error("List customers error:", e);
+      sendFail(res, "Could not load customers.", 500);
     }
   }
 );
@@ -1390,16 +1479,14 @@ app.patch(
   roleMiddleware("ADMIN"),
   async (req, res) => {
     try {
-      let user = { id: Number(req.params.id), isActive: Boolean(req.body.isActive) };
-      try {
-        user = await prisma.user.update({
-          where: { id: Number(req.params.id) },
-          data: { isActive: Boolean(req.body.isActive) },
-        });
-      } catch {}
+      const user = await prisma.user.update({
+        where: { id: Number(req.params.id) },
+        data: { isActive: Boolean(req.body.isActive) },
+      });
       sendOk(res, user, "Customer status updated");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Update customer status error:", e);
+      sendFail(res, "Could not update customer status.", 500);
     }
   }
 );
@@ -1411,19 +1498,17 @@ app.get(
   roleMiddleware("ADMIN", "STAFF"),
   async (req, res) => {
     try {
-      let reviews = [];
-      try {
-        reviews = await prisma.review.findMany({
-          include: {
-            product: { select: { name: true, sku: true } },
-            user: { select: { name: true, email: true } },
-          },
-          orderBy: { createdAt: "desc" },
-        });
-      } catch {}
+      const reviews = await prisma.review.findMany({
+        include: {
+          product: { select: { name: true, sku: true } },
+          user: { select: { name: true, email: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      });
       sendOk(res, reviews);
     } catch (e) {
-      sendOk(res, []);
+      console.error("List admin reviews error:", e);
+      sendFail(res, "Could not load reviews.", 500);
     }
   }
 );
@@ -1434,16 +1519,14 @@ app.patch(
   roleMiddleware("ADMIN", "STAFF"),
   async (req, res) => {
     try {
-      let r = { id: Number(req.params.id), approved: Boolean(req.body.approved) };
-      try {
-        r = await prisma.review.update({
-          where: { id: Number(req.params.id) },
-          data: { approved: Boolean(req.body.approved) },
-        });
-      } catch {}
+      const r = await prisma.review.update({
+        where: { id: Number(req.params.id) },
+        data: { approved: Boolean(req.body.approved) },
+      });
       sendOk(res, r, "Review approval status updated");
     } catch (e) {
-      sendFail(res, e.message, 500);
+      console.error("Update review approval error:", e);
+      sendFail(res, "Could not update review.", 500);
     }
   }
 );
@@ -1451,27 +1534,11 @@ app.patch(
 // Invoices PDF Download
 app.get("/api/invoices/:id", authMiddleware, async (req, res) => {
   try {
-    let o;
-    try {
-      o = await prisma.order.findUnique({
-        where: { id: Number(req.params.id) },
-        include: { items: true, user: true },
-      });
-    } catch {}
-
-    if (!o) {
-      o = {
-        orderNumber: "SC-1001",
-        createdAt: new Date(),
-        orderStatus: "DELIVERED",
-        user: { name: "Lakshmi Priya", email: "customer@sreecollections.local" },
-        items: [{ name: "Kanchipuram Heritage Silk Saree", sku: "SC-SAR-001", quantity: 1, unitPrice: 12499, gst: 5 }],
-        subtotal: 12499,
-        gst: 624.95,
-        shipping: 0,
-        total: 13123.95,
-      };
-    }
+    const o = await prisma.order.findUnique({
+      where: { id: Number(req.params.id) },
+      include: { items: true, user: true },
+    });
+    if (!o) return sendFail(res, "Order not found", 404);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename="Invoice-${o.orderNumber}.pdf"`);
