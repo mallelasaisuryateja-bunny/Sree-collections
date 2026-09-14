@@ -2249,7 +2249,7 @@ function Orders() {
 
 function Collections() {
   const [cols, setCols] = useState([]);
-  useEffect(() => { api.get("/collections").then((r) => setCols(r.data.data)).catch(() => {}); }, []);
+ useEffect(() => { api.get("/collections").then((r) => setCols(r.data.data)).catch(() => {}); }, []);
   return (
     <>
       <Header />
