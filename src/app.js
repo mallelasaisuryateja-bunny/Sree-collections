@@ -18,7 +18,7 @@ app.use(helmet());
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
- "https://sree-collections.netlify.app/"
+ "https://sree-collections.netlify.app"
   "http://localhost:5173",
   ...
 ].filter(Boolean);
