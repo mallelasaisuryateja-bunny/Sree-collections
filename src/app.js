@@ -20,6 +20,11 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
  "https://sree-collections.netlify.app"
   "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://192.168.56.1:5173",
+  "http://192.168.10.46:5173",
+  "http://192.168.10.67:5173",
+  "http://192.168.10.35:5173"
   ...
 ].filter(Boolean);
 
