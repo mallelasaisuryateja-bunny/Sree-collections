@@ -1,53 +1,67 @@
 @import "tailwindcss";
- 
+
 :root {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
   color: #2a1b20;
   background-color: #fbf7f0;
- 
+
   /* ============================================
      BRAND COLOR PALETTE — edit these to re-theme
      the ENTIRE site. Every color in App.jsx now
      points to one of these variables.
      ============================================ */
- 
-  /* Wine / maroon (primary) */
-  --color-wine: #601A24;
-  --color-wine-dark: #4A121A;
+
+  /* Deep Burgundy (primary — headings, nav, text) */
+  --color-wine: #512A23;
+  --color-wine-dark: #3A1D18;
   --color-wine-muted: #3A242B;
   --color-wine-soft: #5A3A42;
- 
-  /* Mauve (secondary/muted text) */
+
+  /* Mauve (secondary/muted text — unchanged, already accessible) */
   --color-mauve: #7A6269;
- 
-  /* Gold (accent) */
-  --color-gold: #C7A867;
-  --color-gold-dark: #B5843C;
-  --color-gold-light: #D4B876;
- 
-  /* Cream / background tones */
-  --color-cream: #FBF6EE;
-  --color-cream-alt: #F9F1D8;
+
+  /* Muted Gold / Champagne Gold (buttons, borders, accents) */
+  --color-gold: #C68946;
+  --color-gold-dark: #A66F34;
+  --color-gold-light: #E3C59A;
+
+  /* Warm Brown (cards, secondary accents) */
+  --color-terracotta: #9A664B;
+  --color-terracotta-dark: #7C4F39;
+
+  /* Warm Ivory / Cream Beige (backgrounds) */
+  --color-cream: #FDFAF5;
+  --color-cream-alt: #F0E8D5;
   --color-cream-deep: #F5E6D3;
   --color-beige: #F0E4D0;
   --color-border: #E5D5C0;
- 
+
+  /* Dusty Rose / Mauve Gray (soft card & secondary UI backgrounds) */
+  --color-dusty-rose: #AA8B86;
+  --color-mauve-gray: #BFAEB2;
+
+  /* Deep Teal (jewelry/product backgrounds) */
+  --color-teal: #1E3137;
+
+  /* Rich Red (small fashion/product accents) */
+  --color-rich-red: #AD171C;
+
   /* Neutrals & status */
-  --color-ink: #1E1E1E;
+  --color-ink: #0D0B0C;
   --color-slate: #1E293B;
   --color-status-red: #9D174D;
   --color-status-green: #065F46;
 }
- 
+
 body {
   margin: 0;
   overflow-x: hidden;
 }
- 
+
 .serif {
   font-family: 'Playfair Display', Georgia, serif;
 }
- 
+
 /* Brand Colors */
 .bg-wine {
   background-color: var(--color-wine);
@@ -58,7 +72,7 @@ body {
 .border-wine {
   border-color: var(--color-wine);
 }
- 
+
 .bg-gold-light {
   background-color: var(--color-cream-alt);
 }
@@ -68,14 +82,14 @@ body {
 .bg-gold {
   background-color: var(--color-gold);
 }
- 
+
 /* Glassmorphism nav */
 .glass-nav {
   background: rgba(251, 247, 240, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
- 
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
