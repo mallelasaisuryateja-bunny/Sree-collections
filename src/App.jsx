@@ -31,7 +31,7 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } fr
 import { api } from "./api";
 const logoImg = "data:image/png;base64,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";
 
-const money = (n) => `$${Number(n || 0).toFixed(2)}`;
+const money = (n) => `₹${Number(n || 0).toFixed(2)}`;
 
 // ----------------------------------------------------
 // BRAND LOGO COMPONENT (MATCHING FIGMA SPECIFICATION)
@@ -156,7 +156,7 @@ function Header({ onOpenCart }) {
       {/* Top Notice Bar */}
       <div className="bg-[var(--color-wine)] text-[var(--color-cream)] text-xs py-2 px-4 text-center font-medium tracking-wide flex items-center justify-center gap-2">
         <Sparkles size={14} className="text-[var(--color-gold)]" />
-        <span>Free Delivery on Orders Above $199 • Order Direct via WhatsApp +1 651-706-6485</span>
+        <span>Free Delivery on Orders Above ₹199 • Order Direct via WhatsApp +1 651-706-6485</span>
       </div>
 
       <header className="sticky top-0 z-40 bg-[var(--color-cream)]/95 backdrop-blur border-b border-[var(--color-border)] transition-all">
@@ -844,10 +844,10 @@ function Products({ onOpenWhatsAppModal }) {
 
   const priceRanges = [
     { label: "All Prices", value: "all" },
-    { label: "$10 - $100", min: 10, max: 100, value: "10-100" },
-    { label: "$100 - $200", min: 100, max: 200, value: "100-200" },
-    { label: "$200 - $300", min: 200, max: 300, value: "200-300" },
-    { label: "$300+", min: 300, max: 10000, value: "300+" },
+    { label: "₹10 - ₹100", min: 10, max: 100, value: "10-100" },
+    { label: "₹100 - ₹200", min: 100, max: 200, value: "100-200" },
+    { label: "₹200 - ₹300", min: 200, max: 300, value: "200-300" },
+    { label: "₹300+", min: 300, max: 10000, value: "300+" },
   ];
 
   useEffect(() => {
@@ -1191,7 +1191,7 @@ function Product({ onOpenWhatsAppModal }) {
               )}
               {activeTab === "shipping" && (
                 <div className="text-xs text-[var(--color-wine-soft)] space-y-1">
-                  <p>Free Express Shipping across USA & India on orders over $199-.</p>
+                  <p>Free Express Shipping across India on orders over ₹199.</p>
                   <p>Dispatched within 24-48 business hours.</p>
                 </div>
               )}
@@ -2318,7 +2318,7 @@ function Collections() {
 // ----------------------------------------------------
 function Admin({ page = "dashboard" }) {
   const nav = useNavigate();
-  const [stats, setStats] = useState({ revenue: "$12,450", products: 24, orders: 18, returns: 2 });
+  const [stats, setStats] = useState({ revenue: "₹12,450", products: 24, orders: 18, returns: 2 });
   const [contactList, setContactList] = useState([]);
   const [returnsList, setReturnsList] = useState([]);
 
@@ -2335,6 +2335,45 @@ function Admin({ page = "dashboard" }) {
     stock: "", shortDescription: "", imageUrl: "", featured: false, newArrival: false,
   });
   const [prodSaving, setProdSaving] = useState(false);
+  const [catUploading, setCatUploading] = useState(false);
+  const [prodUploading, setProdUploading] = useState(false);
+
+  const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await api.post("/admin/upload", formData);
+    return res.data.data.url;
+  };
+
+  const handleCatFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCatUploading(true);
+    try {
+      const url = await uploadImage(file);
+      setCatForm((f) => ({ ...f, image: url }));
+    } catch (err) {
+      alert(err?.response?.data?.message || "Could not upload image.");
+    } finally {
+      setCatUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleProdFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProdUploading(true);
+    try {
+      const url = await uploadImage(file);
+      setProdForm((f) => ({ ...f, imageUrl: url }));
+    } catch (err) {
+      alert(err?.response?.data?.message || "Could not upload image.");
+    } finally {
+      setProdUploading(false);
+      e.target.value = "";
+    }
+  };
 
   const loadCategories = () => {
     api.get("/admin/categories").then((r) => setCategories(r.data.data || [])).catch(() => setCategories([]));
@@ -2510,13 +2549,22 @@ function Admin({ page = "dashboard" }) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-[var(--color-mauve)] uppercase">Image URL (optional)</label>
+                  <label className="text-[10px] font-bold text-[var(--color-mauve)] uppercase">Image (link or upload)</label>
                   <input
                     value={catForm.image}
                     onChange={(e) => setCatForm({ ...catForm, image: e.target.value })}
                     className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
-                    placeholder="https://..."
+                    placeholder="Paste an image link, or upload a photo below"
                   />
+                  <label className="mt-1.5 inline-flex items-center gap-2 text-[11px] font-bold text-[var(--color-wine)] cursor-pointer">
+                    <input type="file" accept="image/*" className="hidden" onChange={handleCatFileChange} disabled={catUploading} />
+                    <span className="px-2.5 py-1 border border-[var(--color-border)] rounded-lg">
+                      {catUploading ? "Uploading..." : "📷 Upload Photo"}
+                    </span>
+                  </label>
+                  {catForm.image && (
+                    <img src={catForm.image} alt="" className="mt-2 w-16 h-16 object-cover rounded-lg border border-[var(--color-border)]" />
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button type="submit" disabled={catSaving} className="flex-1 px-4 py-2.5 bg-[var(--color-wine)] text-white text-xs font-bold rounded-xl disabled:opacity-50">
@@ -2589,7 +2637,7 @@ function Admin({ page = "dashboard" }) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-[var(--color-mauve)] uppercase">Price ($)</label>
+                  <label className="text-[10px] font-bold text-[var(--color-mauve)] uppercase">Price (₹)</label>
                   <input type="number" value={prodForm.price} onChange={(e) => setProdForm({ ...prodForm, price: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm" placeholder="199.00" />
                 </div>
                 <div>
@@ -2597,8 +2645,17 @@ function Admin({ page = "dashboard" }) {
                   <input type="number" value={prodForm.stock} onChange={(e) => setProdForm({ ...prodForm, stock: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm" placeholder="10" />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-[var(--color-mauve)] uppercase">Image URL</label>
-                  <input value={prodForm.imageUrl} onChange={(e) => setProdForm({ ...prodForm, imageUrl: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm" placeholder="https://..." />
+                  <label className="text-[10px] font-bold text-[var(--color-mauve)] uppercase">Image (link or upload)</label>
+                  <input value={prodForm.imageUrl} onChange={(e) => setProdForm({ ...prodForm, imageUrl: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm" placeholder="Paste an image link, or upload a photo below" />
+                  <label className="mt-1.5 inline-flex items-center gap-2 text-[11px] font-bold text-[var(--color-wine)] cursor-pointer">
+                    <input type="file" accept="image/*" className="hidden" onChange={handleProdFileChange} disabled={prodUploading} />
+                    <span className="px-2.5 py-1 border border-[var(--color-border)] rounded-lg">
+                      {prodUploading ? "Uploading..." : "📷 Upload Photo"}
+                    </span>
+                  </label>
+                  {prodForm.imageUrl && (
+                    <img src={prodForm.imageUrl} alt="" className="mt-2 w-16 h-16 object-cover rounded-lg border border-[var(--color-border)]" />
+                  )}
                 </div>
                 <div className="md:col-span-3">
                   <label className="text-[10px] font-bold text-[var(--color-mauve)] uppercase">Short Description</label>
@@ -2646,7 +2703,7 @@ function Admin({ page = "dashboard" }) {
                         <td className="p-4 font-bold text-[var(--color-wine)]">{p.name}</td>
                         <td className="p-4">{p.sku}</td>
                         <td className="p-4">{p.category?.name || "-"}</td>
-                        <td className="p-4">${p.sellingPrice || p.price}</td>
+                        <td className="p-4">{money(p.sellingPrice || p.price)}</td>
                         <td className="p-4">{p.stock}</td>
                         <td className="p-4">
                           <span className={`px-2 py-1 rounded font-bold ${p.status === "ACTIVE" ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
