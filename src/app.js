@@ -5,27 +5,65 @@ import cors from "cors";
 import "dotenv/config";
 import express from "express";
 import rateLimit from "express-rate-limit";
+import fs from "fs";
 import helmet from "helmet";
 import jwt from "jsonwebtoken";
+import multer from "multer";
+import path from "path";
 import PDFDocument from "pdfkit";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
+import { fileURLToPath } from "url";
 
 export const prisma = new PrismaClient();
 const app = express();
 
 app.use(helmet());
 
+// ----------------------------------------------------
+// IMAGE UPLOADS (for the admin "upload photo" option on
+// Categories/Products, as an alternative to pasting a link)
+// ----------------------------------------------------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, "..", "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const uploadStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || "").toLowerCase();
+    cb(null, `product-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+  },
+});
+const upload = multer({
+  storage: uploadStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max per image
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed."));
+    }
+    cb(null, true);
+  },
+});
+
+// Serve uploaded images as static files, and explicitly allow the frontend
+// dev server (a different origin/port) to embed them in <img> tags.
+app.use(
+  "/uploads",
+  express.static(uploadsDir, {
+    setHeaders: (res) => res.set("Cross-Origin-Resource-Policy", "cross-origin"),
+  })
+);
+
 const allowedOrigins = [
   process.env.FRONTEND_URL,
- "https://sree-collections.netlify.app"
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://192.168.56.1:5173",
   "http://192.168.10.46:5173",
   "http://192.168.10.67:5173",
   "http://192.168.10.35:5173"
-  ...
 ].filter(Boolean);
 
 // Matches any device on a private LAN (10.x.x.x, 172.16-31.x.x, 192.168.x.x)
@@ -89,6 +127,13 @@ const roleMiddleware = (...allowedRoles) => (req, res, next) => {
 
 const sendOk = (res, data, message = "Operation successful") =>
   res.json({ success: true, message, data });
+
+const slugify = (str) =>
+  String(str || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") + "-" + Date.now().toString(36).slice(-5);
 
 const sendFail = (res, message, status = 400, errorCode = "ERROR") =>
   res.status(status).json({ success: false, message, error: { code: errorCode } });
@@ -594,6 +639,177 @@ app.post("/api/contact", async (req, res) => {
     sendOk(res, msgObj, "Thank you! Your message has been received. Our team will contact you shortly.");
   } catch (e) {
     sendFail(res, "Could not send message. Please try again.", 500);
+  }
+});
+
+// ----------------------------------------------------
+// ADMIN: IMAGE UPLOAD (upload a photo directly, instead of
+// pasting an image link, for use on Categories/Products)
+// ----------------------------------------------------
+app.post(
+  "/api/admin/upload",
+  authMiddleware,
+  roleMiddleware("ADMIN", "STAFF"),
+  (req, res) => {
+    upload.single("image")(req, res, (err) => {
+      if (err) {
+        return sendFail(res, err.message || "Could not upload image.", 400);
+      }
+      if (!req.file) {
+        return sendFail(res, "No image file was received.", 400);
+      }
+      const url = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+      sendOk(res, { url }, "Image uploaded successfully.");
+    });
+  }
+);
+
+// ----------------------------------------------------
+// ADMIN: CATEGORIES CRUD
+// ----------------------------------------------------
+app.get("/api/admin/categories", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
+  try {
+    const items = await prisma.category.findMany({
+      include: { collection: true },
+      orderBy: { id: "desc" },
+    });
+    sendOk(res, items);
+  } catch (e) {
+    sendFail(res, "Could not load categories.", 500);
+  }
+});
+
+app.post("/api/admin/categories", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
+  try {
+    const { name, collectionId, image, status } = req.body;
+    if (!name || !collectionId) {
+      return sendFail(res, "Category name and collection are required.");
+    }
+    const created = await prisma.category.create({
+      data: {
+        name,
+        slug: slugify(name),
+        collectionId: Number(collectionId),
+        image: image || null,
+        status: status === undefined ? true : Boolean(status),
+      },
+    });
+    sendOk(res, created, "Category created successfully.");
+  } catch (e) {
+    sendFail(res, "Could not create category.", 500);
+  }
+});
+
+app.put("/api/admin/categories/:id", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
+  try {
+    const { name, collectionId, image, status } = req.body;
+    const updated = await prisma.category.update({
+      where: { id: Number(req.params.id) },
+      data: {
+        ...(name && { name }),
+        ...(collectionId && { collectionId: Number(collectionId) }),
+        ...(image !== undefined && { image }),
+        ...(status !== undefined && { status: Boolean(status) }),
+      },
+    });
+    sendOk(res, updated, "Category updated successfully.");
+  } catch (e) {
+    sendFail(res, "Could not update category.", 500);
+  }
+});
+
+app.delete("/api/admin/categories/:id", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
+  try {
+    await prisma.category.delete({ where: { id: Number(req.params.id) } });
+    sendOk(res, null, "Category deleted successfully.");
+  } catch (e) {
+    sendFail(res, "Could not delete category. It may still have products linked to it.", 500);
+  }
+});
+
+// ----------------------------------------------------
+// ADMIN: PRODUCTS CRUD
+// ----------------------------------------------------
+app.get("/api/admin/products", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
+  try {
+    const items = await prisma.product.findMany({
+      include: { images: true, category: true, collection: true },
+      orderBy: { id: "desc" },
+    });
+    sendOk(res, items.map(serializeProduct));
+  } catch (e) {
+    sendFail(res, "Could not load products.", 500);
+  }
+});
+
+app.post("/api/admin/products", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
+  try {
+    const {
+      name, description, shortDescription, collectionId, categoryId,
+      price, stock, status, featured, newArrival, imageUrl,
+    } = req.body;
+    if (!name || !collectionId || !categoryId || !price) {
+      return sendFail(res, "Name, collection, category and price are required.");
+    }
+    const created = await prisma.product.create({
+      data: {
+        name,
+        slug: slugify(name),
+        sku: "SKU-" + Date.now().toString(36).toUpperCase(),
+        description: description || shortDescription || name,
+        shortDescription: shortDescription || null,
+        collectionId: Number(collectionId),
+        categoryId: Number(categoryId),
+        price: Number(price),
+        sellingPrice: Number(price),
+        stock: Number(stock) || 0,
+        status: status || "ACTIVE",
+        featured: Boolean(featured),
+        newArrival: Boolean(newArrival),
+        ...(imageUrl && { images: { create: [{ url: imageUrl, displayOrder: 0 }] } }),
+      },
+      include: { images: true, category: true, collection: true },
+    });
+    sendOk(res, serializeProduct(created), "Product created successfully.");
+  } catch (e) {
+    sendFail(res, "Could not create product.", 500);
+  }
+});
+
+app.put("/api/admin/products/:id", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
+  try {
+    const {
+      name, description, shortDescription, collectionId, categoryId,
+      price, stock, status, featured, newArrival,
+    } = req.body;
+    const updated = await prisma.product.update({
+      where: { id: Number(req.params.id) },
+      data: {
+        ...(name && { name }),
+        ...(description && { description }),
+        ...(shortDescription !== undefined && { shortDescription }),
+        ...(collectionId && { collectionId: Number(collectionId) }),
+        ...(categoryId && { categoryId: Number(categoryId) }),
+        ...(price && { price: Number(price), sellingPrice: Number(price) }),
+        ...(stock !== undefined && { stock: Number(stock) }),
+        ...(status && { status }),
+        ...(featured !== undefined && { featured: Boolean(featured) }),
+        ...(newArrival !== undefined && { newArrival: Boolean(newArrival) }),
+      },
+      include: { images: true, category: true, collection: true },
+    });
+    sendOk(res, serializeProduct(updated), "Product updated successfully.");
+  } catch (e) {
+    sendFail(res, "Could not update product.", 500);
+  }
+});
+
+app.delete("/api/admin/products/:id", authMiddleware, roleMiddleware("ADMIN", "STAFF"), async (req, res) => {
+  try {
+    await prisma.product.delete({ where: { id: Number(req.params.id) } });
+    sendOk(res, null, "Product deleted successfully.");
+  } catch (e) {
+    sendFail(res, "Could not delete product.", 500);
   }
 });
 
